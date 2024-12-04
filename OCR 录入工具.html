@@ -10,27 +10,27 @@
 
             // 内置的正则替换规则
             var replace_rules = [
-                //    \(\)（）
-                { pattern: /(?<!_)[_\—](?!_)/g, replacement: '____' },//#下划线修正，_和—换成____
-                { pattern: /(?<=[\u4e00-\u9fa5][_\(\)（）]*)[\.\．]/g, replacement: '。' },//标点修正，全角半角句点前有汉字就换成句号
-                { pattern: /(?<=[\u4e00-\u9fa5][_\(\)（）]*)\?/g, replacement: '？' },//标点修正，英文问号前有汉字就换成中文问号
-                { pattern: /(?<=[\u4e00-\u9fa5][_\(\)（）]*)\,/g, replacement: '，' },//标点修正，英文逗号前有汉字就换成中文逗号
-                { pattern: /(?<=[\u4e00-\u9fa5][_\(\)（）]*)\u0028/g, replacement: '（' },//标点修正，英文前括号前有汉字就换成中文括号
+                { pattern: /(?<!_)[_\—](?!_)/g, replacement: '____' },//#匹配横线，修改为下划线
+                { pattern: /(?<=[\u4e00-\u9fa5][_\(\)（）]*)[\.\．]/g, replacement: '。' },//匹配句点，前面是汉字修改成中文符号
+                { pattern: /(?<=[\u4e00-\u9fa5][_\(\)（）]*)\?/g, replacement: '？' },//匹配英文问号，前面是汉字修改成中文符号
+                { pattern: /(?<=[\u4e00-\u9fa5][_\(\)（）]*)\,/g, replacement: '，' },//匹配英文逗号，前面是汉字修改成中文符号
+                { pattern: /(?<=[\u4e00-\u9fa5][_\(\)（）]*)\u0028/g, replacement: '（' },//匹配前英文括号，前面是汉字修改成中文符号
                 { pattern: /(?<=[a-z])\r?\n(?=[a-z])/g, replacement: ' ' },
-                { pattern: /((?<![\?\？\.\。!\！\u0029\uFF09])\r?\n(?![ABCD]))/g, replacement: '' },//回车修正，删除回车，除非前面有标点或者后面有选项
-                { pattern: /\u0028\uFF09|\uFF08\u0029/g, replacement: '（）' },//左右连续的括号不匹配就换成中文括号
-                { pattern: /(?<=[,.])\s+(?=")/g, replacement: '' },//标点和引号之间去空格
-                { pattern: /(?<=[\u4e00-\u9fa5]) +(?=\d|[A-Z])/g, replacement: '' },//识别到汉字+空格+数字或大写字母，删掉空格
+                { pattern: /((?<![\?\？\.\。!\！\u0029\uFF09])\r?\n(?![ABCD]))/g, replacement: '' },//匹配回车，删除或变成空格
+                { pattern: /\u0028\uFF09|\uFF08\u0029/g, replacement: '（）' },//匹配不对称括号，替换为中文括号
+                { pattern: /(?<=[,.])\s+(?=")/g, replacement: '' },//匹配空格，位于英文引号与句点间删除空格
+                { pattern: /(?<=[\u4e00-\u9fa5]) +(?=\d|[A-Z])/g, replacement: '' },//匹配空格，识别到汉字+空格+数字或大写字母，删掉空格
                 { pattern: /(?<=[\n\)）][A-F0-9])[\.\．\。\ ] */g, replacement: '. ' },//检测回车+选项字母+点，如A.存在，统一换成A. 存在，的形式
-                { pattern: /(?<=\d|[A-Z]) +(?=[\u4e00-\u9fa5])/g, replacement: '' },//识别到数字+空格+汉字或大写字母，删掉空格。不匹配小写字母因为这种情况基本都要转公式
-                { pattern: /\([ 　]*\)[ 　]*/g, replacement: '(　) ' },//英文空格里没有全角空格就加上
-                { pattern: /(?<=[米次克吨斤秒分小平方度瓦千分厘毫微人])[、](?=[米秒毫克吨斤度瓦百千人])/g, replacement: '/' },//单位里/总被识别成顿号，这个可以修改回来
-                { pattern: /^[\u0028\uFF08]\d+[\u0029\uFF09]/g, replacement: '' },//删除开头有括号的序号
-                { pattern: /^[\d一-十]+[\.\．、] */g, replacement: '' },//删除开头数字加点形式的序号
-                { pattern: /(?<=[a-zA-Z.\(\)]) ?____/g, replacement: ' ____' },//四线检测到前面的英文，加空格
-                { pattern: /____ ?(?=[a-zA-Z\(\)])/g, replacement: '____ ' },//四线检测到后面的英文，加括号
+                { pattern: /(?<=\d|[A-Z]) +(?=[\u4e00-\u9fa5])/g, replacement: '' },//匹配空格，识别到数字+空格+汉字或大写字母，删掉空格。不匹配小写字母因为这种情况基本都要转公式
+                { pattern: /\([ 　]*\)[ 　]*/g, replacement: '(　)' },//匹配英文括号，变成(　) 
+                { pattern: /(?<=[米次克吨斤秒分小平方度瓦千分厘毫微人])[、](?=[米秒毫克吨斤度瓦百千人])/g, replacement: '/' },//匹配顿号，检测到是单位替换成/
+                { pattern: /^[\u0028\uFF08]\d+[\u0029\uFF09]/g, replacement: '' },
+                { pattern: /^[\d一-十]+[\.\．、] */g, replacement: '' },//匹配题号并删除
+                { pattern: /(?<=[a-zA-Z.\(\)]) ?____/g, replacement: ' ____' },//
+                { pattern: /____ ?(?=[a-zA-Z\(\)])/g, replacement: '____ ' },//匹配四线，检测到前后面的英文，加空格
                 { pattern: /(?<=\w)\((?=[\u4e00-\u9fa5])/g, replacement: ' (' },
-                { pattern: /(?<=[\u4e00-\u9fa5])\) *(?=\w)/g, replacement: ') ' },//翻译前后加空格
+                { pattern: /(?<=[\u4e00-\u9fa5])\) *(?=\w)/g, replacement: ') ' },//匹配英文空格，检测到是翻译则加空格
+                { pattern: /\(　\) ?(?=[A-F1-9])/g, replacement: '(　) ' },//匹配(　)英文空格，检测到后面是题号，加空格
 
             ];
             // 执行正则替换
