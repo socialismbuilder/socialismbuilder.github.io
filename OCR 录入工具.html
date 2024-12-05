@@ -1,78 +1,161 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>OCR录入修正工具</title>
-    <script>
-        function replaceText() {
-            // 获取用户输入的文本
-            var inputText = document.getElementById("inputText").value;
-
-            // 内置的正则替换规则
-            var replace_rules = [
-                { pattern: /(?<!_)[_\—](?!_)/g, replacement: '____' },//#匹配横线，修改为下划线
-                { pattern: /(?<=[\u4e00-\u9fa5][_\(\)（）]*)[\.\．]/g, replacement: '。' },//匹配句点，前面是汉字修改成中文符号
-                { pattern: /(?<=[\u4e00-\u9fa5][_\(\)（）]*)\?/g, replacement: '？' },//匹配英文问号，前面是汉字修改成中文符号
-                { pattern: /(?<=[\u4e00-\u9fa5][_\(\)（）]*)\,/g, replacement: '，' },//匹配英文逗号，前面是汉字修改成中文符号
-                { pattern: /(?<=[\u4e00-\u9fa5][_\(\)（）]*)\u0028/g, replacement: '（' },//匹配前英文括号，前面是汉字修改成中文符号
-                { pattern: /(?<=[a-z])\r?\n+(?=[a-z])/g, replacement: ' ' },
-                { pattern: /((?<![\?\？\.\。!\！\u0029\uFF09])\r?\n(?![ABCD]))/g, replacement: '' },//匹配回车，删除或变成空格
-                { pattern: /\u0028\uFF09|\uFF08\u0029/g, replacement: '（）' },//匹配不对称括号，替换为中文括号
-                { pattern: /(?<=[,.])\s+(?=")/g, replacement: '' },//匹配空格，位于英文引号与句点间删除空格
-                { pattern: /(?<=[\u4e00-\u9fa5]) +(?=\d|[A-Z])/g, replacement: '' },//匹配空格，识别到汉字+空格+数字或大写字母，删掉空格
-                { pattern: /(?<=[\n\)）][A-F0-9])[\.\．\。\ ] */g, replacement: '. ' },//检测回车+选项字母+点，如A.存在，统一换成A. 存在，的形式
-                { pattern: /(?<=\d|[A-Z]) +(?=[\u4e00-\u9fa5])/g, replacement: '' },//匹配空格，识别到数字+空格+汉字或大写字母，删掉空格。不匹配小写字母因为这种情况基本都要转公式
-                { pattern: /\([ 　]*\)[ 　]*/g, replacement: '(　)' },//匹配英文括号，变成(　) 
-                { pattern: /(?<=[米次克吨斤秒分小平方度瓦千分厘毫微人])[、](?=[米秒毫克吨斤度瓦百千人])/g, replacement: '/' },//匹配顿号，检测到是单位替换成/
-                { pattern: /^[\u0028\uFF08]\d+[\u0029\uFF09]/g, replacement: '' },
-                { pattern: /^[\d一-十]+[\.\．、] */g, replacement: '' },//匹配题号并删除
-                { pattern: /(?<=[a-zA-Z.\(\)]) ?____/g, replacement: ' ____' },//
-                { pattern: /____ ?(?=[a-zA-Z\(\)])/g, replacement: '____ ' },//匹配四线，检测到前后面的英文，加空格
-                { pattern: /(?<=[a-zA-Z]), ?(?=[a-zA-Z])/gm, replacement: ', ' },//匹配逗号，前后都是英文加空格
-                { pattern: /(?<=\w) *\( *(?=[\u4e00-\u9fa5])/g, replacement: ' (' },
-                { pattern: /(?<=[\u4e00-\u9fa5]) *\) *(?=\w)/g, replacement: ') ' },//匹配英文空格，检测到是翻译则加空格
-                { pattern: /\(　\) ?(?=[A-F1-9])/g, replacement: '(　) ' },//匹配(　)英文空格，检测到后面是题号，加空格
-                { pattern: / ?（ *） ?/g, replacement: '（） ' },//匹配中文括号，去空格
-
-            ];
-            // 执行正则替换
-            for (var i = 0; i < replace_rules.length; i++) {
-                inputText = inputText.replace(replace_rules[i].pattern, replace_rules[i].replacement);
-            }
-            // 显示替换后的结果
-            document.getElementById("resultText").value = inputText;
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCR文本处理工具</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
-        function copyResult() {
-            const resultText = document.getElementById('resultText'); // 获取resultText元素
-            const tempTextArea = document.createElement('textarea'); // 创建临时textarea元素
-
-            // 移除readonly属性以便复制
-            resultText.readOnly = false;
-
-            // 直接使用 resultText.value 进行复制
-            tempTextArea.value = resultText.value.trim(); // 使用resultText.value
-            document.body.appendChild(tempTextArea); // 将临时textarea添加到body
-            tempTextArea.select(); // 选中临时textarea的内容
-            document.execCommand('copy'); // 执行复制命令
-            document.body.removeChild(tempTextArea); // 移除临时textarea
-            resultText.readOnly = true; // 复制完成后恢复readonly属性
-
-            //alert('文本已复制到剪贴板'); // 弹出提示
+        .container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 20px;
         }
-    </script>
+        textarea {
+            width: 100%;
+            min-height: 300px;
+            resize: vertical;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+        }
+    </style>
 </head>
 <body>
-    <h1>OCR录入修正工具</h1>
-    <textarea id="inputText" rows="10" cols="50" placeholder="在这里输入文本..."></textarea><br><br>
+    <h1>OCR文本处理工具</h1>
     
-    <button onclick="replaceText()">替换</button>
-    <h2>替换后的文本：</h2>
-    <textarea id="resultText" rows="10" cols="50" readonly></textarea>
+    <div class="container">
+        <textarea id="inputText" placeholder="在这里输入文本..."></textarea>
+        <textarea id="resultText" readonly placeholder="处理后的文本将在这里显示"></textarea>
+    </div>
+    
+    <button onclick="processAndCopyText()">处理并复制</button>
 
-    <button onclick="copyResult()">复制</button>
-    <!-- 版权信息 -->
+    <script>
+
+        function preprocess(text) {
+            text = text
+            .replace(/\n+/g,'\n')//处理连续多个回车
+            .replace(/((?<![\?\？\.\。!\！\)）]) *\r?\n+ *(?![A-F0-9\(（]))/g,' ')//删除多余回车
+            .replace(/(?<=[0-9]\.) *\n/g,'')
+            .replace(/(?<!_) *[_\—] *(?!_)/g, ' ____ ')//下划线纠正
+            .replace(/\s?____\s?/g, ' ____ ')//下划线纠正
+            .replace(/ +/g,' ')//多个空格归一化
+            return text;
+        }
+        function amend_Punctuation(text) {
+            text = text
+            .replace(/(?<=[\u4e00-\u9fa5][_\(\)（） ]*)[\.\．]/g,'。')
+            .replace(/(?<=[\u4e00-\u9fa5][_\(\)（） ]*)\,/g,'，')
+            .replace(/(?<=[\u4e00-\u9fa5][_\(\)（） ]*)\?/g,'？')
+            .replace(/(?<=[\u4e00-\u9fa5][_\(\)（） ]*)\:/g,'：')
+            .replace(/(?<=[\u4e00-\u9fa5][_\(\)（） ]*)\；/g,';')
+            .replace(/(?<=[\u4e00-\u9fa5][_\(\)（） ]*)\!/g,'！')
+            .replace(/([\u4e00-\u9fa5][_\,\.\?\!\;，。？！；]*) *[\(（] *([\S]{0,50}) *[\)）] */g,'$1（$2）')//中文后的括号修正
+            .replace(/ *（ *([\S]{0,50}) *\) */g,'($1)')//括号前后不一致的换成英文
+            .replace(/ ?\(([0-9a-z]{0,2})\)\.? ?(?=[\u4e00-\u9fa5])/g, '（$1）')//中文里的序号括号换成中文
+            .replace(/(?<=[a-zA-Z_]) *([,.!]) *(?=[a-zA-Z_])/g,'$1 ')//英文标点空格修正
+            .replace(/(?<=[\w]) *([\(（]) *([\u4e00-\u9fa5]{1,5}) *([\)）]) */g,' ($2) ')
+            return text;
+        }
+
+        function formatting(text) {
+            text = text
+            .replace(/(?<=[,.])\s+(?=")/g,'')//"good. "
+            .replace(/([\u4e00-\u9fa5]) *([\dA-Z]+) */g,'$1$2')//有 1 个
+            .replace(/([\n \)）])( *)([A-F0-9])( ?)[\.\．\。] */g,'$1$3. ')//A.或者1.
+            .replace(/\([ 　]*\)[ 　]*/g,' (　) ')//(　)
+            .replace(/(?<=[米次克吨斤秒分小平方度瓦千分厘毫微人])[、](?=[米秒毫克吨斤度瓦百千人])/g,'/')//米、秒
+            .replace(/^[\u0028\uFF08]\d+[\u0029\uFF09]/g, '')
+            .replace(/^[\d一-十]+[\.\．、] */g, '')//删题号
+            .replace(/ *([ap]). *m. */g,' $1.m. ')
+            .replace(/ *([0-2])?([0-9])\s?[:：]\s?([0-6])?([0-9]) */g,' $1$2:$3$4 ')
+            .replace(/( ?____ ?)(?=[A-Z])/g,'—')//半破号处理
+            return text;
+        }
+
+        function post_process(text) {
+            text = text
+            .replace(/ *([\,\.\?\"\!？。，！“])/g,'$1')//空格加标点，删除空格
+            .replace(/^[\s]*/gm,'')//开头的空格全部去掉
+            .replace(/(?<=[\u4e00-\u9fa5]) */g,'')//汉字后的空格删除
+            .replace(/ +/g,' ')//删除重复空格
+            .replace(/ ([b-z]) (?=____)/g,' $1')
+            return text;
+        }
+
+
+        // 主处理函数
+        function processText(text) {
+            //预处理，删除多余的回车,修正不正确的下划线，删除多余的空格
+            text = preprocess(text);
+            //处理符号
+            text = amend_Punctuation(text);
+            //处理特定格式
+            text = formatting(text);
+            //后处理
+            text = post_process(text);
+            return text;
+        }
+
+
+        // 处理并复制文本的主函数
+        function processAndCopyText() {
+            // 获取输入文本
+            const inputText = document.getElementById('inputText').value;
+            
+            // 处理文本
+            const processedText = processText(inputText);
+            
+            // 显示处理后的文本
+            document.getElementById('resultText').value = processedText;
+            
+            // 创建临时文本区域用于复制
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = processedText;
+            document.body.appendChild(tempTextArea);
+            
+            // 选择并复制文本
+            tempTextArea.select();
+            document.execCommand('copy');
+            
+            // 移除临时文本区域
+            document.body.removeChild(tempTextArea);
+            
+            // 提示用户已复制
+            //toast('文本已复制到剪贴板');
+            function showNotification(message) {
+                const div = document.createElement('div');
+                div.textContent = message;
+                div.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background-color: #333;
+                color: white;
+                padding: 10px;
+                border-radius: 5px;
+              `;
+                document.body.appendChild(div);
+                setTimeout(() => div.remove(), 3000);
+            }
+            showNotification('文本已复制到剪贴板');
+        }
+    </script>
+
     <footer style="font-size: smaller; margin-top: 20px; text-align: center;">
-        作者 &copy; 谢凯 仅供内部测试使用，不保证结果正确性，请勿外传
+        &copy; 内部测试工具
     </footer>
 </body>
 </html>
