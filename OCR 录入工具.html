@@ -89,7 +89,8 @@
         function post_process(text) {
             text = text
             .replace(/ *([\,\.\?\"\!？。，！“])/g,'$1')//空格加标点，删除空格
-            .replace(/^[\s]*/gm,'')//开头的空格全部去掉
+            .replace(/^[ ]*/gm,'')//开头的空格全部去掉
+            .replace(/[ ]*$/gm, '')
             .replace(/(?<=[\u4e00-\u9fa5]) */g,'')//汉字后的空格删除
             .replace(/ +/g,' ')//删除重复空格
             .replace(/ ([b-z]) (?=____)/g,' $1')
