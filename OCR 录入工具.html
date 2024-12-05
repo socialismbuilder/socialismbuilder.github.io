@@ -15,7 +15,7 @@
                 { pattern: /(?<=[\u4e00-\u9fa5][_\(\)（）]*)\?/g, replacement: '？' },//匹配英文问号，前面是汉字修改成中文符号
                 { pattern: /(?<=[\u4e00-\u9fa5][_\(\)（）]*)\,/g, replacement: '，' },//匹配英文逗号，前面是汉字修改成中文符号
                 { pattern: /(?<=[\u4e00-\u9fa5][_\(\)（）]*)\u0028/g, replacement: '（' },//匹配前英文括号，前面是汉字修改成中文符号
-                { pattern: /(?<=[a-z])\r?\n(?=[a-z])/g, replacement: ' ' },
+                { pattern: /(?<=[a-z])\r?\n+(?=[a-z])/g, replacement: ' ' },
                 { pattern: /((?<![\?\？\.\。!\！\u0029\uFF09])\r?\n(?![ABCD]))/g, replacement: '' },//匹配回车，删除或变成空格
                 { pattern: /\u0028\uFF09|\uFF08\u0029/g, replacement: '（）' },//匹配不对称括号，替换为中文括号
                 { pattern: /(?<=[,.])\s+(?=")/g, replacement: '' },//匹配空格，位于英文引号与句点间删除空格
@@ -28,9 +28,11 @@
                 { pattern: /^[\d一-十]+[\.\．、] */g, replacement: '' },//匹配题号并删除
                 { pattern: /(?<=[a-zA-Z.\(\)]) ?____/g, replacement: ' ____' },//
                 { pattern: /____ ?(?=[a-zA-Z\(\)])/g, replacement: '____ ' },//匹配四线，检测到前后面的英文，加空格
-                { pattern: /(?<=\w)\((?=[\u4e00-\u9fa5])/g, replacement: ' (' },
-                { pattern: /(?<=[\u4e00-\u9fa5])\) *(?=\w)/g, replacement: ') ' },//匹配英文空格，检测到是翻译则加空格
+                { pattern: /(?<=[a-zA-Z]), ?(?=[a-zA-Z])/gm, replacement: ', ' },//匹配逗号，前后都是英文加空格
+                { pattern: /(?<=\w) *\( *(?=[\u4e00-\u9fa5])/g, replacement: ' (' },
+                { pattern: /(?<=[\u4e00-\u9fa5]) *\) *(?=\w)/g, replacement: ') ' },//匹配英文空格，检测到是翻译则加空格
                 { pattern: /\(　\) ?(?=[A-F1-9])/g, replacement: '(　) ' },//匹配(　)英文空格，检测到后面是题号，加空格
+                { pattern: / ?（ *） ?/g, replacement: '（） ' },//匹配中文括号，去空格
 
             ];
             // 执行正则替换
@@ -55,7 +57,7 @@
             document.body.removeChild(tempTextArea); // 移除临时textarea
             resultText.readOnly = true; // 复制完成后恢复readonly属性
 
-            alert('文本已复制到剪贴板'); // 弹出提示
+            //alert('文本已复制到剪贴板'); // 弹出提示
         }
     </script>
 </head>
