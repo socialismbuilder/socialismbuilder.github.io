@@ -17,7 +17,6 @@
             width: 100%; 
             height: 200px; 
             margin-bottom: 10px; 
-            resize: vertical;
         } 
         #result { 
             margin-top: 20px; 
@@ -91,7 +90,7 @@
             } 
              
             // 显示 LaTeX 代码 
-            result.textContent = `\\(${convertedText}\\)`; 
+            result.textContent = `(${convertedText})`; 
             copyButton.style.display = 'block'; 
  
             // 渲染 MathJax 
