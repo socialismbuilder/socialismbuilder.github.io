@@ -63,6 +63,7 @@
     <div id="result"></div> 
     <button id="copyButton" onclick="copyResult()" style="display:none;">复制 LaTeX 代码</button> 
     <script> 
+        let convertedText
         function convertText() { 
             let input = document.getElementById('inputText').value; 
             const result = document.getElementById('result'); 
@@ -71,7 +72,7 @@
             // 修改正则表达式以支持中文括号 
             const regex = /([^\(（]+)?([^（\(]+)(?:\(([^\)）]+)\)|（([^）]+)）)?/g; 
              
-            let convertedText = ''; 
+            convertedText = ''; 
             let match; 
             input = input.replace(/一 ?[\(（] ?y. ?[\)）]/g,'一(yī)')
             while ((match = regex.exec(input)) !== null) { 
@@ -90,11 +91,14 @@
             } 
              
             // 显示 LaTeX 代码 
-            result.textContent = `(${convertedText})`; 
+            result.textContent = `\\(${convertedText}\\)`; 
             copyButton.style.display = 'block'; 
  
             // 渲染 MathJax 
             MathJax.Hub.Queue(["Typeset", MathJax.Hub]); 
+
+
+            
         } 
  
         function copyResult() { 
@@ -102,7 +106,8 @@
             const tempTextArea = document.createElement('textarea'); 
              
             // 直接使用 result.textContent 进行复制 
-            tempTextArea.value = result.textContent.trim(); 
+            //tempTextArea.value = result.textContent.trim(); 
+            tempTextArea.value = convertedText
             document.body.appendChild(tempTextArea); 
             tempTextArea.select(); 
             document.execCommand('copy'); 
