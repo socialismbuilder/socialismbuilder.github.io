@@ -26,21 +26,43 @@
             font-family: monospace; 
             user-select: all; 
         } 
-        #copyButton { 
-            margin-top: 10px; 
-        } 
+
+        #convertButton {
+            padding: 10px 20px;
+            margin: 10px 0;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        #copyButton {
+            padding: 10px 20px;
+            margin: 10px 0;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
     </style> 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script> 
 </head> 
 <body> 
+
     <h1>汉字标注转换器</h1> 
     <textarea id="inputText" placeholder="在这里输入文本"></textarea> 
-    <button onclick="convertText()">转换</button> 
+    <button id="convertButton" onclick="convertText()">转换</button> 
     <div id="result"></div> 
     <button id="copyButton" onclick="copyResult()" style="display:none;">复制 LaTeX 代码</button> 
     <script> 
         function convertText() { 
-            const input = document.getElementById('inputText').value; 
+            let input = document.getElementById('inputText').value; 
             const result = document.getElementById('result'); 
             const copyButton = document.getElementById('copyButton'); 
              
@@ -49,7 +71,7 @@
              
             let convertedText = ''; 
             let match; 
-             
+            input = input.replace(/一 ?[\(（] ?y. ?[\)）]/g,'一(yī)')
             while ((match = regex.exec(input)) !== null) { 
                 const [fullMatch, prefix = '', hanzi, engPinyin, cnPinyin] = match; 
                 const pinyin = engPinyin || cnPinyin; 
@@ -66,7 +88,7 @@
             } 
              
             // 显示 LaTeX 代码 
-            result.textContent = `${convertedText}`; 
+            result.textContent = `\\(${convertedText}\\)`; 
             copyButton.style.display = 'block'; 
  
             // 渲染 MathJax 
@@ -83,7 +105,23 @@
             tempTextArea.select(); 
             document.execCommand('copy'); 
             document.body.removeChild(tempTextArea); 
-            alert('LaTeX 代码已复制到剪贴板'); 
+
+            function showNotification(message) {
+                const div = document.createElement('div');
+                div.textContent = message;
+                div.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background-color: #333;
+                color: white;
+                padding: 10px;
+                border-radius: 5px;
+              `;
+                document.body.appendChild(div);
+                setTimeout(() => div.remove(), 3000);
+            }
+            showNotification('LaTeX 代码已复制到剪贴板');
         } 
     </script> 
  
