@@ -1,0 +1,137 @@
+<!DOCTYPE html> 
+<html lang="zh"> 
+<head> 
+    <meta charset="UTF-8"> 
+    <title>汉字标注转换器</title> 
+    <style> 
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        textarea { 
+            width: 100%; 
+            height: 200px; 
+            margin-bottom: 10px; 
+        } 
+        #result { 
+            margin-top: 20px; 
+            line-height: 1.6; 
+            border: 1px solid #ccc; 
+            padding: 10px; 
+            white-space: pre-wrap; 
+            text-align: left; 
+            font-family: monospace; 
+            user-select: all; 
+        } 
+
+        #convertButton {
+            padding: 10px 20px;
+            margin: 10px 0;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        #copyButton {
+            padding: 10px 20px;
+            margin: 10px 0;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+    </style> 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script> 
+</head> 
+<body> 
+
+    <h1>矩阵输入助手</h1> 
+    <textarea id="inputText" placeholder="在这里输入文本"></textarea> 
+    <button id="convertButton" onclick="convertText()">转换</button> 
+    <div id="result"></div> 
+    <button id="copyButton" onclick="copyResult()" style="display:none;">复制 LaTeX 代码</button> 
+    <script> 
+        let convertedText
+            function generateLatexMatrix(inputString) {
+            // 按回车拆分输入字符串为多行
+            const lines = inputString.split('\n');
+            
+            // 对每一行的每个字符加上 \mathrm{}
+            const formattedLines = lines.map(line => 
+                Array.from(line).map(char => `\\mathrm{${char}}`).join('')
+            );
+            
+            // 拼接成 LaTeX array 格式
+            const arrayContent = formattedLines.join('\\\\ \n');
+            
+            // 包裹在 \boxed 和 \begin{array} 中
+            const latexResult = `\\boxed{\\begin{array}{l}\n${arrayContent}\n\\end{array}}`;
+            return latexResult;
+        }
+
+
+
+        function convertText() { 
+            let input = document.getElementById('inputText').value; 
+            const result = document.getElementById('result'); 
+            const copyButton = document.getElementById('copyButton'); 
+            
+            convertedText = generateLatexMatrix(input)
+            
+             
+            // 显示 LaTeX 代码 
+            result.textContent = `\\(${convertedText}\\)`; 
+            copyButton.style.display = 'block'; 
+ 
+            // 渲染 MathJax 
+            MathJax.Hub.Queue(["Typeset", MathJax.Hub]); 
+
+
+            
+        } 
+ 
+        function copyResult() { 
+            const result = document.getElementById('result'); 
+            const tempTextArea = document.createElement('textarea'); 
+             
+            // 直接使用 result.textContent 进行复制 
+            //tempTextArea.value = result.textContent.trim(); 
+            tempTextArea.value = convertedText
+            document.body.appendChild(tempTextArea); 
+            tempTextArea.select(); 
+            document.execCommand('copy'); 
+            document.body.removeChild(tempTextArea); 
+
+            function showNotification(message) {
+                const div = document.createElement('div');
+                div.textContent = message;
+                div.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background-color: #333;
+                color: white;
+                padding: 10px;
+                border-radius: 5px;
+              `;
+                document.body.appendChild(div);
+                setTimeout(() => div.remove(), 3000);
+            }
+            showNotification('LaTeX 代码已复制到剪贴板');
+        } 
+    </script> 
+ 
+</body> 
+</html>
