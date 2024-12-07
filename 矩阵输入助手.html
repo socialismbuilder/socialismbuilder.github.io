@@ -64,7 +64,7 @@
     <button id="copyButton" onclick="copyResult()" style="display:none;">复制 LaTeX 代码</button> 
     <script> 
         let convertedText
-            function generateLatexMatrix(inputString) {
+        function generateLatexMatrix(inputString) {
             // 按回车拆分输入字符串为多行
             const lines = inputString.split('\n');
             
@@ -88,6 +88,8 @@
             const result = document.getElementById('result'); 
             const copyButton = document.getElementById('copyButton'); 
             
+            input = input.replace(/[\r\n]+/g,'\n');
+            alert(input)
             convertedText = generateLatexMatrix(input)
             
              
