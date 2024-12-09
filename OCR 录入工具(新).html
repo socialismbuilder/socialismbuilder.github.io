@@ -75,7 +75,7 @@
                     .replace(/\!/g, '！')
                     .replace(/\?/g, '？')
                     .replace(/\,/g, '，')
-                    .replace(/(?<![A-F])\./g, '。')
+                    .replace(/(?<![A-F0-9])\./g, '。')
                     .replace(/\:/g, '：')
                     .replace(/\;/g, '；')
                     .replace(/\(/g, '（')
@@ -83,6 +83,7 @@
                     .replace(/(?<=[0-9])。(?=[0-9])/g,'.')
                     .replace(/([a-zA-z0-9]) *(?=[\u4e00-\u9fa5])/g,'$1')
                     .replace(/(?<=[\u4e00-\u9fa5]) *([a-zA-z0-9])/g,'$1')
+                    .replace(/ ____ /g,'____')
                     break;
                 case '英语':
                     text = text
