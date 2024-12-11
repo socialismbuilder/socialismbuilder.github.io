@@ -65,14 +65,32 @@
     <script> 
         let convertedText
         function generateLatexMatrix(inputString) {
+            // 转义LaTeX中特殊字符
+            const escapeLatex = (char) => {
+                const specialChars = {
+                    '_': '\\_',
+                    ' ': '\\ ',
+                    '&': '\\&',
+                    '%': '\\%',
+                    '$': '\\$',
+                    '#': '\\#',
+                    '{': '\\{',
+                    '}': '\\}',
+                    '~': '\\textasciitilde{}',
+                    '^': '\\textasciicircum{}',
+                    '\\': '\\textbackslash{}'
+                };
+                return specialChars[char] || char;
+            };
+
             // 按回车拆分输入字符串为多行
             const lines = inputString.split('\n');
             
-            // 对每一行的每个字符加上 \mathrm{}
+            // 对每一行的每个字符加上 \mathrm{}，并对特殊字符进行转义
             const formattedLines = lines.map(line => 
-                Array.from(line).map(char => `\\mathrm{${char}}`).join('')
+                Array.from(line).map(char => `\\mathrm{${escapeLatex(char)}}`).join('')
             );
-            
+
             // 拼接成 LaTeX array 格式
             const arrayContent = formattedLines.join('\\\\ \n');
             
@@ -80,6 +98,7 @@
             const latexResult = `\\boxed{\\begin{array}{l}\n${arrayContent}\n\\end{array}}`;
             return latexResult;
         }
+
 
 
 

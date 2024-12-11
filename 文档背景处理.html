@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文档背景处理</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .image-container {
+            margin-top: 20px;
+        }
+        img {
+            max-width: 80%;
+            height: auto;
+        }
+        #blur-input {
+            width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <h1>文档背景处理</h1>
+    <label for="blur-input">模糊程度（像素）：</label>
+    <input type="range" id="blur-input" min="0" max="150" step="1" value="50">
+    <span id="blur-value">50</span>
+
+    <div class="image-container">
+        <canvas id="canvas"></canvas>
+    </div>
+
+    <script>
+        const blurInput = document.getElementById('blur-input');
+        const blurValueDisplay = document.getElementById('blur-value');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let image = new Image();
+        let originalImageData = null;
+
+        // 监听粘贴事件
+        document.addEventListener('paste', async (event) => {
+            const items = event.clipboardData.items;
+            for (let item of items) {
+                if (item.type.startsWith('image/')) {
+                    const file = item.getAsFile();
+                    const url = URL.createObjectURL(file);
+                    image.src = url;
+                    break;
+                }
+            }
+        });
+
+        // 加载图片并处理
+        image.onload = () => {
+            canvas.width = image.width;
+            canvas.height = image.height;
+            ctx.drawImage(image, 0, 0);
+            originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            applyGaussianBlur();
+        };
+
+        // 输入框变化时处理
+        blurInput.addEventListener('input', () => {
+            blurValueDisplay.textContent = blurInput.value;
+            applyGaussianBlur();
+        });
+
+        // 应用高斯模糊并实现划分混合模式
+        function applyGaussianBlur() {
+            const blurValue = parseInt(blurInput.value) || 0;
+
+            // 绘制模糊图片
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.filter = `blur(${blurValue}px)`;
+            ctx.drawImage(image, 0, 0);
+            ctx.filter = 'none';
+
+            // 获取模糊后的图像数据
+            const blurredImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+            // 划分模式处理
+            const resultImageData = ctx.createImageData(canvas.width, canvas.height);
+            for (let i = 0; i < originalImageData.data.length; i += 4) {
+                for (let j = 0; j < 3; j++) { // 处理 R, G, B 三个通道
+                    const original = originalImageData.data[i + j];
+                    const blurred = blurredImageData.data[i + j];
+                    resultImageData.data[i + j] = blurred === 0 ? 255 : Math.min(255, (original / blurred) * 255);
+                }
+                resultImageData.data[i + 3] = originalImageData.data[i + 3]; // 复制 alpha 通道
+            }
+
+            // 显示结果
+            ctx.putImageData(resultImageData, 0, 0);
+        }
+    </script>
+</body>
+</html>
