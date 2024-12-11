@@ -45,6 +45,18 @@
             return text.trim();
         };
 
+        const processTextBySegments = (text) => {
+            return text.replace(/(<tex>[\s\S]*?<\/tex>)|([^<tex>]+)/g, (match, texSegment, textSegment) => {
+                if (texSegment) {
+                    // 保留 <tex> 标签内容不处理
+                    return texSegment;
+                } else if (textSegment) {
+                    // 对普通文本段调用 processText
+                    return processText(textSegment);
+                }
+                return match;
+            });
+        };
 
         // 文本处理逻辑
         const processText = (text) => {
@@ -94,7 +106,7 @@
         };
 
         const handleProcess = async () => {
-            const processedText = processText(inputHTML);
+            const processedText = processTextBySegments(inputHTML);
             const processedHTML = textToHTML(processedText);
             setOutputHTML(processedHTML);
             const blob = new Blob([processedHTML], { type: 'text/html' });
