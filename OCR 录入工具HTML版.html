@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCR录入工具</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="reg.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+    const AdvancedWebTemplate = () => {
+        const [selectedOption, setSelectedOption] = React.useState(null);
+        const [inputHTML, setInputHTML] = React.useState('');
+        const [outputHTML, setOutputHTML] = React.useState('');
+
+        const handleOptionChange = (option) => {
+            setSelectedOption(option);
+        };
+
+        // 提取 HTML 内容为纯文本，保留 <tex> 标签
+        const htmlToText = (html) => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            let text = '';
+
+            doc.body.childNodes.forEach((node) => {
+                if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'P') {
+                    let paragraph = '';
+                    node.childNodes.forEach((child) => {
+                        if (child.nodeType === Node.ELEMENT_NODE && child.tagName === 'TEX') {
+                            paragraph += `<tex>${child.innerHTML}</tex>`;
+                        } else if (child.nodeType === Node.TEXT_NODE) {
+                            paragraph += child.textContent;
+                        }
+                    });
+                    text += paragraph + '\n';
+                }
+            });
+
+            return text.trim();
+        };
+
+
+        // 文本处理逻辑
+        const processText = (text) => {
+            text = preprocess(text);
+            //处理符号
+            text = amend_Punctuation(text);
+            //处理特定格式
+            text = formatting(text);
+            //分科处理
+            text = classified_process(text, selectedOption)
+            //后处理
+            text = post_process(text);
+            return text;
+        };
+
+        // 将纯文本封装为 HTML
+        const textToHTML = (text) => {
+            return text
+                .split('\n')
+                .filter((line) => line.trim() !== '')
+                .map((line) => {
+                    if (line.startsWith('<tex>') && line.endsWith('</tex>')) {
+                        return line; // 保留完整的 <tex> 标签
+                    }
+                    return `<p>${line}</p>`;
+                })
+                .join('');
+        };
+
+        const handlePaste = async (event) => {
+            event.preventDefault();
+            try {
+                const clipboardItems = await navigator.clipboard.read();
+                for (const item of clipboardItems) {
+                    if (item.types.includes('text/html')) {
+                        const htmlBlob = await item.getType('text/html');
+                        const htmlText = await htmlBlob.text();
+                        setInputHTML(htmlToText(htmlText));
+                        return;
+                    }
+                }
+                alert('剪切板中没有HTML内容，请确认复制的内容是HTML格式！');
+            } catch (err) {
+                console.error('读取剪切板失败:', err);
+                alert('无法读取剪切板内容，请检查权限设置！');
+            }
+        };
+
+        const handleProcess = async () => {
+            const processedText = processText(inputHTML);
+            const processedHTML = textToHTML(processedText);
+            setOutputHTML(processedHTML);
+            const blob = new Blob([processedHTML], { type: 'text/html' });
+            const data = [
+                new ClipboardItem({
+                    'text/html': blob
+                })
+            ];
+            try {
+                await navigator.clipboard.write(data);
+                alert('处理后的HTML已复制到剪切板！');
+            } catch (err) {
+                console.error('复制到剪切板失败:', err);
+                alert('复制失败，请检查权限设置！');
+            }
+        };
+
+        return (
+            <div className="container mx-auto p-6 bg-gray-50 min-h-screen flex flex-col">
+                <div className="mb-6 flex space-x-4 justify-center">
+                    {['不区分', '语数', '英语'].map((option) => (
+                        <label 
+                            key={option} 
+                            className={`
+                                px-4 py-2 rounded-lg cursor-pointer transition-all
+                                ${selectedOption === option 
+                                    ? 'bg-[#4CAF50] text-white hover:bg-[#45a049]'
+                                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'
+                                }
+                            `}
+                        >
+                            <input
+                                type="radio"
+                                name="processingOption"
+                                value={option}
+                                checked={selectedOption === option}
+                                onChange={() => handleOptionChange(option)}
+                                className="hidden"
+                            />
+                            {option}
+                        </label>
+                    ))}
+                </div>
+
+                <div className="flex space-x-6 flex-grow">
+                    <div
+                        onPaste={handlePaste}
+                        className="w-1/2 p-4 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#4CAF50] bg-white overflow-auto"
+                        style={{ whiteSpace: 'pre-wrap' }}
+                    >
+                        {inputHTML}
+                    </div>
+
+                    <div
+                        className="w-1/2 p-4 border border-gray-300 rounded-lg bg-gray-100 resize-none overflow-auto"
+                        dangerouslySetInnerHTML={{ __html: outputHTML }}
+                    ></div>
+                </div>
+
+                <div className="mt-6 text-center">
+                    <button
+                        onClick={handleProcess}
+                        disabled={!selectedOption}
+                        className={`
+                            px-8 py-3 rounded-lg transition-all
+                            ${selectedOption 
+                                ? 'bg-[#4CAF50] text-white hover:bg-[#45a049]'
+                                : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                            }
+                        `}
+                    >
+                        处理并复制
+                    </button>
+                </div>
+            </div>
+        );
+    };
+
+    ReactDOM.render(<AdvancedWebTemplate />, document.getElementById('root'));
+    </script>
+</body>
+</html>
