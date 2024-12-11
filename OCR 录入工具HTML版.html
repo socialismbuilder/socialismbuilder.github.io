@@ -12,7 +12,6 @@
 </head>
 <body>
     <div id="root"></div>
-
     <script type="text/babel">
     const AdvancedWebTemplate = () => {
         const [selectedOption, setSelectedOption] = React.useState(null);
@@ -90,7 +89,7 @@
                 alert('剪切板中没有HTML内容，请确认复制的内容是HTML格式！');
             } catch (err) {
                 console.error('读取剪切板失败:', err);
-                alert('无法读取剪切板内容，请检查权限设置！');
+                alert('无法读取剪切板内容，请检查权限设置！在网址前添加     https:// ');
             }
         };
 
@@ -106,10 +105,25 @@
             ];
             try {
                 await navigator.clipboard.write(data);
-                alert('处理后的HTML已复制到剪切板！');
+                function showNotification(message) {
+                    const div = document.createElement('div');
+                    div.textContent = message;
+                    div.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background-color: #333;
+                    color: white;
+                    padding: 10px;
+                    border-radius: 5px;
+                    `;
+                    document.body.appendChild(div);
+                    setTimeout(() => div.remove(), 3000);
+                }
+                showNotification('文本已复制到剪贴板');
             } catch (err) {
                 console.error('复制到剪切板失败:', err);
-                alert('无法读取剪切板内容，请检查权限设置！在网址前添加     https:// ');
+                alert('复制失败，请检查权限设置！');
             }
         };
 
