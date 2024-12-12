@@ -20,9 +20,10 @@ function amend_Punctuation(text) {
     .replace(/ *（ *([\S]{0,50}) *\) */g,'($1)')//括号前后不一致的换成英文
     .replace(/ ?\(([0-9a-z]{0,2})\)\.? ?(?=[\u4e00-\u9fa5])/g, '（$1）')//中文里的序号括号换成中文
     .replace(/(?<=[a-zA-Z_]) *([,.!]) *(?=[a-zA-Z_])/g,'$1 ')//英文标点空格修正
-    .replace(/ *([\(（]) *([\S]{1,10}) *([\)）]) */g,' ($2) ')
     .replace(/( ?____ ?)(?=[A-Z])/g,'—')//半破号处理
-    .replace(/( *[.,:?] *)/g,'$1 ')
+    .replace(/ *([.,:?]) */g,'$1 ')//英文标点加空格
+    .replace(/(?<=[0-9]) *. *(?=[0-9])/g,'.')//小数点去空格
+    .replace(/ *([\(（]) *([\S]{1,10}) *([\)）]) */g,' ($2) ')//括号修正
     return text;
 }
 
@@ -41,8 +42,6 @@ function formatting(text) {
     .replace(/[\(（] ?[0-9]{1,2} ?分 ?[\)）]/g,'')
     .replace(/ *([ap])\. *m. */g,' $1.m. ')
     .replace(/ *([0-2])?([0-9])\s?[:：]\s?([0-6])?([0-9]) */g,' $1$2:$3$4 ')
-    console.log(text)
-    text = text
     return text;
 }
 function classified_process(text,selectedOption){
