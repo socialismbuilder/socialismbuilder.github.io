@@ -20,7 +20,8 @@ function amend_Punctuation(text) {
     .replace(/ *（ *([\S]{0,50}) *\) */g,'($1)')//括号前后不一致的换成英文
     .replace(/ ?\(([0-9a-z]{0,2})\)\.? ?(?=[\u4e00-\u9fa5])/g, '（$1）')//中文里的序号括号换成中文
     .replace(/(?<=[a-zA-Z_]) *([,.!]) *(?=[a-zA-Z_])/g,'$1 ')//英文标点空格修正
-    .replace(/( ?____ ?)(?=[A-Z])/g,'—')//半破号处理
+    .replace(/( ?____ ?)(?=[A-Z])/g,' —')//半破号处理
+    .replace(/[-]{2,}/g,' —')
     .replace(/ *([.,:?]) */g,'$1 ')//英文标点加空格
     .replace(/(?<=[0-9]) *. *(?=[0-9])/g,'.')//小数点去空格
     .replace(/ *([\(（]) *([\S]{1,10}) *([\)）]) */g,' ($2) ')//括号修正
@@ -73,6 +74,8 @@ function classified_process(text,selectedOption){
             .replace(/；/g, ';')
             .replace(/（/g, '(')
             .replace(/）/g, ')')
+            .replace(/[“”]/g, '"')
+            .replace(/’/g, '\'')
             break;
         default:
             //setOutputText('请先选择处理方式');
