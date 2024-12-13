@@ -43,7 +43,6 @@ function formatting(text) {
     .replace(/[\(（] ?[0-9]{1,2} ?分 ?[\)）]/g,'')
     .replace(/ *([ap])\. *m. */g,' $1.m. ')
     .replace(/ *([0-2])?([0-9])\s?[:：]\s?([0-6])?([0-9]) */g,' $1$2:$3$4 ')
-
     return text;
 }
 function classified_process(text,selectedOption){
@@ -86,7 +85,7 @@ function classified_process(text,selectedOption){
 
 function post_process(text) {
     text = text
-    .replace(/ *([\,\.\?\"\!？。，！“])/g,'$1')//空格加标点，删除空格
+    .replace(/ *([\,\.\?\!？。，！“])/g,'$1')//空格加标点，删除空格
     .replace(/^[ ]*/gm,'')//开头的空格全部去掉
     .replace(/[ ]*$/gm, '')//结尾的空格全去掉
     .replace(/(?<=[\u4e00-\u9fa5，：！。”“；（）])[ 　]]*/g,'')//汉字和汉语标点后的空格删除
