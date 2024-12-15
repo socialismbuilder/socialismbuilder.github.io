@@ -46,11 +46,14 @@
         };
 
         const processTextBySegments = (text) => {
-            return text.replace(/(<tex>[\s\S]*?<\/tex>)|([^<tex>]+)/g, (match, texSegment, textSegment) => {
+            //console.log('处理字符：(总)'+text)
+            return text.replace(/(<tex>[\s\S]*?<\/tex>)|((?:(?!<tex>)[\s\S])+)/g, (match, texSegment, textSegment) => {
                 if (texSegment) {
+                    //console.log('公式字符：'+texSegment)
                     // 保留 <tex> 标签内容不处理
                     return texSegment;
                 } else if (textSegment) {
+                    //console.log('文本字符：'+textSegment)
                     // 对普通文本段调用 processText
                     return processText(textSegment);
                 }
