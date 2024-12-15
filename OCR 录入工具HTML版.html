@@ -45,22 +45,30 @@
             return text.trim();
         };
 
-        const processTextBySegments = (text) => {
-            //console.log('处理字符：(总)'+text)
-            return text.replace(/(<tex>[\s\S]*?<\/tex>)|((?:(?!<tex>)[\s\S])+)/g, (match, texSegment, textSegment) => {
-                if (texSegment) {
-                    //console.log('公式字符：'+texSegment)
-                    // 保留 <tex> 标签内容不处理
-                    return texSegment;
-                } else if (textSegment) {
-                    //console.log('文本字符：'+textSegment)
-                    // 对普通文本段调用 processText
-                    return processText(textSegment);
-                }
-                return match;
-            });
-        };
+        function processTextWithTex(text) {
+            // 1. 提取 <tex> 标签内容
+            const texSegments = [];
+            const texRegex = /<tex>[\s\S]*?<\/tex>/g;
 
+            // 使用占位符替换 <tex> 内容
+            let processedText = text.replace(texRegex, (match) => {
+                texSegments.push(match); // 保存匹配到的 tex 段
+                 return `☃TEX☃PLACEHOLDER☃${texSegments.length - 1}☃`; // 占位符
+            });
+
+            // 2. 处理普通文本段
+            processedText = processText(processedText);
+
+            // 3. 替换占位符为原来的 <tex> 内容
+            texSegments.forEach((texSegment, index) => {
+                processedText = processedText.replace(
+                    `☃TEX☃PLACEHOLDER☃${index}☃`,
+                    texSegment
+                );
+            });
+
+            return processedText;
+        }
         // 文本处理逻辑
         const processText = (text) => {
             text = preprocess(text);
@@ -109,7 +117,7 @@
         };
 
         const handleProcess = async () => {
-            const processedText = processTextBySegments(inputHTML);
+            const processedText = processTextWithTex(inputHTML);
             const processedHTML = textToHTML(processedText);
             setOutputHTML(processedHTML);
             const blob = new Blob([processedHTML], { type: 'text/html' });
