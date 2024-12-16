@@ -120,13 +120,16 @@
                 alert('无法读取剪切板内容，请检查权限设置！在网址前添加     https:// ');
             }
         };
-        document.addEventListener("keydown", function (event) {
+
+        document.addEventListener("keydown", keydownHandler);
+        function keydownHandler(event) {
             // 检查是否按下 Ctrl 和 B 键
             if (event.ctrlKey && event.key === "b") {
-                //event.preventDefault(); // 阻止默认行为（例如浏览器的快捷键）
-                handleProcess(); // 调用函数
+                handleProcess(); // 调用函数            
+                // 移除事件监听器
+                document.removeEventListener("keydown", keydownHandler);
             }
-        });
+        }
 
         const handleProcess = async () => {
             const processedText = processTextWithTex(inputHTML);

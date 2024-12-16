@@ -78,13 +78,15 @@
             showNotification('文本已复制到剪贴板');
         };
 
-        document.addEventListener("keydown", function (event) {
+        document.addEventListener("keydown", keydownHandler);
+        function keydownHandler(event) {
             // 检查是否按下 Ctrl 和 B 键
             if (event.ctrlKey && event.key === "b") {
-                //event.preventDefault(); // 阻止默认行为（例如浏览器的快捷键）
-                handleProcess(); // 调用函数
+                handleProcess(); // 调用函数            
+                // 移除事件监听器
+                document.removeEventListener("keydown", keydownHandler);
             }
-        });
+        }
 
         return (
             <div className="container mx-auto p-6 bg-gray-50 min-h-screen flex flex-col">
