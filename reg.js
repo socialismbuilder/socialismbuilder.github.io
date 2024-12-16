@@ -95,3 +95,9 @@ function post_process(text) {
     .replace(/ ?\/ ?/g,'/')
     return text;
 }
+
+function tex_process(text) {
+    text = text
+    .replace(/[\(（][\)）]/g,'(　)')
+    return text;
+}

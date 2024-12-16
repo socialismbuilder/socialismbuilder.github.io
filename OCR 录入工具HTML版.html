@@ -59,7 +59,12 @@
             // 2. 处理普通文本段
             processedText = processText(processedText);
 
-            // 3. 替换占位符为原来的 <tex> 内容
+            // 3. 处理公式部分
+            texSegments.forEach((match, index) => {
+            texSegments[index] = tex_process(match);
+            });
+
+            // 4. 替换占位符为原来的 <tex> 内容
             texSegments.forEach((texSegment, index) => {
                 processedText = processedText.replace(
                     `☃TEX☃PLACEHOLDER☃${index}☃`,
