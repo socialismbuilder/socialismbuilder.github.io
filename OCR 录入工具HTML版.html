@@ -102,6 +102,12 @@
                 .join('');
         };
 
+        React.useEffect(() => {
+            if (inputHTML) {
+                handleProcess();
+            }
+        }, [inputHTML]);
+
         const handlePaste = async (event) => {
             event.preventDefault();
             try {

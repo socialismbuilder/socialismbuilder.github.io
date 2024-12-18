@@ -99,5 +99,7 @@ function post_process(text) {
 function tex_process(text) {
     text = text
     .replace(/[\(（][\)）]/g,'(　)')
+    .replace(/α/g,'\\alpha')
+    .replace(/β/g,'\\beta')
     return text;
 }
