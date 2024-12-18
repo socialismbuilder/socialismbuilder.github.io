@@ -4,22 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>文档背景处理</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.css">
     <style>
+        .slider-container {
+            width: 40%;
+            margin: 10px auto;
+        }
         body {
             font-family: Arial, sans-serif;
-            text-align: center;
-            margin-top: 20px;
+            text-align: center; /* 居中内容 */
+            margin: 0;
+            padding: 0;
+            display: flex; /* 使用 flex 布局 */
+            flex-direction: column; /* 垂直方向排列 */
+            align-items: center; /* 水平居中 */
+            justify-content: flex-start; /* 从顶部开始排列 */
+            height: 100vh; /* 占满整个视窗高度 */
         }
+
         .image-container {
-            margin-top: 20px;
+            position: relative; /* 设置父容器的相对定位 */
+            height: 100vh; /* 父容器的高度，根据需要调整 */
+            width: 100vw; /* 父容器的宽度，根据需要调整 */
+            display: flex; /* 使用flex布局 */
+            justify-content: center; /* 水平居中 */
+            align-items: center; /* 垂直居中 */
         }
-        img {
-            max-width: 80%;
-            height: auto;
-        }
-        #blur-input, #level-b {
-            width: 300px;
-        }
+
         #copy-button {
             padding: 10px 20px;
             margin: 10px 0;
@@ -44,38 +55,62 @@
             border-radius: 5px;
             opacity: 0.9;
         }
+        canvas {
+            border: 1px solid #ccc;
+            position: absolute; /* 保证多层画布重叠 */
+            top: 50%; /* 向上移动50% */
+            left: 50%; /* 向左移动50% */
+            transform: translate(-50%, -50%); /* 将画布移回中心位置 */
+            border: none;
+        }
     </style>
 </head>
 <body>
+
     <h1>文档背景处理</h1>
-    <label for="blur-input">模糊程度（像素）：</label>
-    <input type="range" id="blur-input" min="0" max="150" step="1" value="50">
-    <span id="blur-value">50</span>
+    <label for="blur-input">模糊半径：</label>
+    <div id="blur-slider" class="slider-container"></div>
     <br><br>
 
-    <h2>亮度调整</h2>
-    <label for="level-b">亮度调整：</label>
-    <input type="range" id="level-b" min="0" max="255" step="1" value="128">
-    <span id="level-b-value">128</span>
+    <label for="level-b">色阶：</label>
+    <div id="level-slider" class="slider-container"></div>
     <br><br>
 
     <button id="copy-button">复制到剪切板</button>
 
     <div class="image-container">
-        <canvas id="canvas"></canvas>
+        <canvas id="drawingCanvas"></canvas>
+        <canvas id="cursorCanvas"></canvas>
     </div>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.js"></script>
     <script>
         const blurInput = document.getElementById('blur-input');
         const blurValueDisplay = document.getElementById('blur-value');
         const levelBInput = document.getElementById('level-b');
         const levelBValue = document.getElementById('level-b-value');
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
+
+        const drawingCanvas = document.getElementById('drawingCanvas');
+        const cursorCanvas = document.getElementById('cursorCanvas');
+        const drawCtx = drawingCanvas.getContext('2d');
+        const cursorCtx = cursorCanvas.getContext('2d');
+
+
         const copyButton = document.getElementById('copy-button');
 
         let image = new Image();
         let originalImageData = null;
+
+        const blurSlider = noUiSlider.create(document.getElementById('blur-slider'), {
+            start: [50],
+            range: { 'min': 0, 'max': 150 },
+            step: 1
+        });
+        const levelSlider = noUiSlider.create(document.getElementById('level-slider'), {
+            start: [0, 128, 255],
+            connect: [false, true, true, false],
+            range: { 'min': 0, 'max': 255 },
+            step: 1
+        });
 
         // 监听粘贴事件
         document.addEventListener('paste', async (event) => {
@@ -92,10 +127,13 @@
 
         // 加载图片并处理
         image.onload = () => {
-            canvas.width = image.width;
-            canvas.height = image.height;
-            ctx.drawImage(image, 0, 0);
-            originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            drawingCanvas.width = image.width;
+            drawingCanvas.height = image.height;
+            cursorCanvas.width = image.width;
+            cursorCanvas.height = image.height;
+            drawCtx.drawImage(image, 0, 0);
+            cursorCtx.clearRect(0, 0, cursorCanvas.width, cursorCanvas.height);
+            originalImageData = drawCtx.getImageData(0, 0, drawingCanvas.width, drawingCanvas.height);
             applyEffects();
         };
 
@@ -114,54 +152,62 @@
         }
 
         // 应用亮度调整
-        function applyBrightness(data, midpoint) {
+        function applyBrightness(data, midpoint, minpoint, maxpoint) {
             for (let i = 0; i < data.length; i += 4) {
                 for (let j = 0; j < 3; j++) {
                     let value = data[i + j];
-                    value = value < midpoint ? (value / midpoint) * 128 : 128 + ((value - midpoint) / (255 - midpoint)) * 127;
+                    //value = value < midpoint ? (value / midpoint) * 128 : 128 + ((value - midpoint) / (255 - midpoint)) * 127;
+                    //data[i + j] = Math.min(255, Math.max(0, value));
+                    if (value < minpoint) {
+                        value = 0;
+                    }else if (value < midpoint) {
+                        value = ((value - minpoint) / (midpoint - minpoint)) * 128;
+                    } else if (value < maxpoint) {
+                        value = 128 + ((value - midpoint) / (maxpoint - midpoint)) * 127;
+                    } else {
+                         value = 255;
+                    }
                     data[i + j] = Math.min(255, Math.max(0, value));
+
                 }
             }
         }
 
         // 输入框变化时更新显示并处理
-        blurInput.addEventListener('input', () => {
-            blurValueDisplay.textContent = blurInput.value;
-            applyEffects();
-        });
 
-        levelBInput.addEventListener('input', () => {
-            levelBValue.textContent = levelBInput.value;
-            applyEffects();
-        });
+        // 为两个滑块都绑定相同的更新函数
+        levelSlider.on('slide', applyEffects);
+        blurSlider.on('slide', applyEffects);
 
         // 应用模糊、划分和亮度效果
         function applyEffects() {
-            const blurValue = parseInt(blurInput.value) || 0;
-            const midpoint = parseInt(levelBInput.value) || 128;
+            const blurValue = blurSlider.get()||0
+            const midpoint = levelSlider.get()[1] || 128;
+            const minpoint = levelSlider.get()[0] || 0;
+            const maxpoint = levelSlider.get()[2] || 255;
+            
 
             // 绘制模糊图片
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.filter = `blur(${blurValue}px)`;
-            ctx.drawImage(image, 0, 0);
-            ctx.filter = 'none';
+            drawCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+            drawCtx.filter = `blur(${blurValue}px)`;
+            drawCtx.drawImage(image, 0, 0);
+            drawCtx.filter = 'none';
 
             // 获取模糊后的图像数据
-            const blurredImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const blurredImageData = drawCtx.getImageData(0, 0, drawingCanvas.width, drawingCanvas.height);
 
             // 获取划分模式的结果
             const dividedData = applyDivision(originalImageData.data, blurredImageData.data);
 
             // 创建新的图像数据对象
-            const resultImageData = new ImageData(dividedData, canvas.width, canvas.height);
+            const resultImageData = new ImageData(dividedData, drawingCanvas.width, drawingCanvas.height);
 
             // 应用亮度调整
-            applyBrightness(resultImageData.data, midpoint);
+            applyBrightness(resultImageData.data, midpoint, minpoint, maxpoint);
 
             // 显示结果
-            ctx.putImageData(resultImageData, 0, 0);
+            drawCtx.putImageData(resultImageData, 0, 0);
         }
-
         // 显示通知
         function showNotification(message) {
             const div = document.createElement('div');
@@ -173,7 +219,7 @@
 
         // 复制图片到剪切板
         copyButton.addEventListener('click', async () => {
-            canvas.toBlob(async (blob) => {
+            drawingCanvas.toBlob(async (blob) => {
                 try {
                     await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
                     showNotification('处理后的图片已复制到剪切板');
@@ -182,6 +228,89 @@
                     showNotification('复制失败，请重试');
                 }
             });
+        });
+
+
+
+
+        const state = {
+            isDrawing: false,
+            lastX: 0,
+            lastY: 0,
+            brushSize: 20,
+            color: 'white',
+            mouseX: 0,
+            mouseY: 0
+        };
+
+        // 绘制光标
+        function drawCursor(x, y) {
+            cursorCtx.clearRect(0, 0, cursorCanvas.width, cursorCanvas.height); // 清理上层光标画布
+            cursorCtx.beginPath();
+            cursorCtx.strokeStyle = 'rgba(0,0,0,0.5)';
+            cursorCtx.lineWidth = 1;
+            cursorCtx.arc(x, y, state.brushSize / 2, 0, Math.PI * 2);
+            cursorCtx.stroke();
+        }
+
+        // 鼠标移动时更新光标
+        function handleMouseMove(e) {
+            const rect = drawingCanvas.getBoundingClientRect();
+            state.mouseX = e.clientX - rect.left;
+            state.mouseY = e.clientY - rect.top;
+
+            drawCursor(state.mouseX, state.mouseY);
+        }
+
+        // 开始绘图
+        function startDrawing(e) {
+            state.isDrawing = true;
+            const rect = drawingCanvas.getBoundingClientRect();
+            [state.lastX, state.lastY] = [e.clientX - rect.left, e.clientY - rect.top];
+            draw(e);
+        }
+
+        // 绘图过程
+        function draw(e) {
+            if (!state.isDrawing) return;
+
+            const rect = drawingCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            drawCtx.beginPath();
+            drawCtx.strokeStyle = state.color;
+            drawCtx.lineWidth = state.brushSize;
+            drawCtx.lineCap = 'round';
+            drawCtx.lineJoin = 'round';
+
+            drawCtx.moveTo(state.lastX, state.lastY);
+            drawCtx.lineTo(x, y);
+            drawCtx.stroke();
+
+            [state.lastX, state.lastY] = [x, y];
+        }
+
+        // 停止绘图
+        function stopDrawing() {
+            state.isDrawing = false;
+            cursorCtx.clearRect(0, 0, cursorCanvas.width, cursorCanvas.height); // 清理光标画布
+        }
+
+        // 事件监听
+        cursorCanvas.addEventListener('mousedown', startDrawing);
+        cursorCanvas.addEventListener('mousemove', handleMouseMove);
+        cursorCanvas.addEventListener('mousemove', draw);
+        cursorCanvas.addEventListener('mouseup', stopDrawing);
+        //cursorCanvas.addEventListener('mouseout', stopDrawing);
+
+        // Shift + 滚轮调节画笔大小
+        cursorCanvas.addEventListener('wheel', (e) => {
+            if (e.shiftKey) {
+                e.preventDefault();
+                state.brushSize = Math.max(1, state.brushSize * (e.deltaY > 0 ? 0.9 : 1.1));
+                drawCursor(state.mouseX, state.mouseY);
+            }
         });
     </script>
 </body>
