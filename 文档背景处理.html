@@ -275,8 +275,10 @@
             if (!state.isDrawing) return;
 
             const rect = drawingCanvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+            let x = e.clientX - rect.left;
+            let y = e.clientY - rect.top;
+            x = Math.max(0, Math.min(x, drawingCanvas.width));
+            y = Math.max(0, Math.min(y, drawingCanvas.height));
 
             drawCtx.beginPath();
             drawCtx.strokeStyle = state.color;
@@ -300,8 +302,8 @@
         // 事件监听
         cursorCanvas.addEventListener('mousedown', startDrawing);
         cursorCanvas.addEventListener('mousemove', handleMouseMove);
-        cursorCanvas.addEventListener('mousemove', draw);
-        cursorCanvas.addEventListener('mouseup', stopDrawing);
+        window.addEventListener('mousemove', draw);
+        window.addEventListener('mouseup', stopDrawing);
         //cursorCanvas.addEventListener('mouseout', stopDrawing);
 
         // Shift + 滚轮调节画笔大小
