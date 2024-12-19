@@ -123,35 +123,34 @@
             
         } 
  
-        function copyResult() { 
-            const result = document.getElementById('result'); 
-            const tempTextArea = document.createElement('textarea'); 
-             
-            // 直接使用 result.textContent 进行复制 
-            //tempTextArea.value = result.textContent.trim(); 
-            tempTextArea.value = convertedText
-            document.body.appendChild(tempTextArea); 
-            tempTextArea.select(); 
-            document.execCommand('copy'); 
-            document.body.removeChild(tempTextArea); 
-
-            function showNotification(message) {
-                const div = document.createElement('div');
-                div.textContent = message;
-                div.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background-color: #333;
-                color: white;
-                padding: 10px;
-                border-radius: 5px;
-              `;
-                document.body.appendChild(div);
-                setTimeout(() => div.remove(), 3000);
+        const copyResult = async () => {
+            convertedText = '<tex>'+convertedText+'</tex>'
+            const blob = new Blob([convertedText], { type: 'text/html' });
+            const data = [new ClipboardItem({'text/html': blob})];
+            navigator.clipboard.write(data);
+            try {
+                await navigator.clipboard.write(data);
+                function showNotification(message) {
+                    const div = document.createElement('div');
+                    div.textContent = message;
+                    div.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background-color: #333;
+                    color: white;
+                    padding: 10px;
+                    border-radius: 5px;
+                    `;
+                    document.body.appendChild(div);
+                    setTimeout(() => div.remove(), 3000);
+                }
+                showNotification('文本已复制到剪贴板');
+            } catch (err) {
+                console.error('复制到剪切板失败:', err);
+                alert('复制失败，请检查权限设置！');
             }
-            showNotification('LaTeX 代码已复制到剪贴板');
-        } 
+        }
     </script> 
  
 </body> 
