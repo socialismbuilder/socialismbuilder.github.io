@@ -38,7 +38,7 @@
         }
         .button {
             padding: 10px 20px;
-            margin: 10px 0;
+            margin: 10px 5px;
             background-color: #4CAF50;
             color: white;
             border: none;
@@ -50,13 +50,22 @@
         .button:hover {
             background-color: #45a049;
         }
+        .button-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
     <h1>汉字标注转换器</h1>
     <textarea id="inputText" placeholder="在这里输入文本"></textarea>
     <textarea id="intermediaResult" placeholder="这里将显示带拼音的文本，可以直接编辑修正"></textarea>
-    <button id="convertButton" class="button" onclick="process()">转换并复制</button>
+    <div class="button-container">
+        <button class="button" onclick="processFromInput()">从输入开始转换</button>
+        <button class="button" onclick="processFromIntermediate()">从标注转换</button>
+    </div>
     <div id="result"></div>
 
     <script>
@@ -101,18 +110,30 @@
             return latexText;
         }
 
-        // 主处理函数
-        async function process() {
-            const intermediaResult = document.getElementById('intermediaResult');
+        // 从输入框开始处理
+        async function processFromInput() {
             const inputText = document.getElementById('inputText').value;
+            if (!inputText.trim()) return;
             
-            // 如果中间结果为空，且输入框有内容，则生成拼音
-            if (!intermediaResult.value.trim() && inputText.trim()) {
-                intermediaResult.value = generatePinyin(inputText);
-            }
+            // 生成拼音并设置到中间结果框
+            document.getElementById('intermediaResult').value = generatePinyin(inputText);
             
-            // 使用中间结果框的内容进行后续转换
-            convertedText = convertToLatex(intermediaResult.value);
+            // 继续处理LaTeX转换和复制
+            await finalProcess(document.getElementById('intermediaResult').value);
+        }
+
+        // 从中间结果框开始处理
+        async function processFromIntermediate() {
+            const intermediaText = document.getElementById('intermediaResult').value;
+            if (!intermediaText.trim()) return;
+            
+            // 直接处理LaTeX转换和复制
+            await finalProcess(intermediaText);
+        }
+
+        // 最终处理步骤（LaTeX转换和复制）
+        async function finalProcess(text) {
+            convertedText = convertToLatex(text);
             
             // 显示预览
             document.getElementById('result').textContent = `\\(${convertedText}\\)`;
@@ -151,7 +172,11 @@
         // 添加快捷键支持
         document.addEventListener('keydown', function(e) {
             if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                process();
+                // Ctrl+Enter 默认使用第二个按钮的功能
+                processFromIntermediate();
+            } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'Enter') {
+                // Ctrl+Shift+Enter 使用第一个按钮的功能
+                processFromInput();
             }
         });
     </script>
