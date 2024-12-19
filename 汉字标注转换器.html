@@ -1,9 +1,11 @@
-<!DOCTYPE html> 
-<html lang="zh"> 
-<head> 
-    <meta charset="UTF-8"> 
-    <title>汉字标注转换器</title> 
-    <style> 
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>汉字标注转换器</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pinyin-pro/3.19.6/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    <style>
         body {
             font-family: Arial, sans-serif;
             max-width: 800px;
@@ -13,23 +15,28 @@
             flex-direction: column;
             align-items: center;
         }
-        textarea { 
-            width: 100%; 
-            height: 200px; 
-            margin-bottom: 10px; 
-        } 
-        #result { 
-            margin-top: 20px; 
-            line-height: 1.6; 
-            border: 1px solid #ccc; 
-            padding: 10px; 
-            white-space: pre-wrap; 
-            text-align: left; 
-            font-family: monospace; 
-            user-select: all; 
-        } 
-
-        #convertButton {
+        textarea {
+            width: 100%;
+            height: 200px;
+            margin-bottom: 10px;
+            padding: 10px;
+            box-sizing: border-box;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        #result {
+            margin-top: 20px;
+            line-height: 1.6;
+            border: 1px solid #ccc;
+            padding: 10px;
+            white-space: pre-wrap;
+            text-align: left;
+            font-family: monospace;
+            user-select: all;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .button {
             padding: 10px 20px;
             margin: 10px 0;
             background-color: #4CAF50;
@@ -40,83 +47,94 @@
             font-size: 16px;
             transition: background-color 0.3s;
         }
-
-        #copyButton {
-            padding: 10px 20px;
-            margin: 10px 0;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s;
+        .button:hover {
+            background-color: #45a049;
         }
-    </style> 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script> 
-</head> 
-<body> 
+    </style>
+</head>
+<body>
+    <h1>汉字标注转换器</h1>
+    <textarea id="inputText" placeholder="在这里输入文本"></textarea>
+    <textarea id="intermediaResult" placeholder="这里将显示带拼音的文本，可以直接编辑修正"></textarea>
+    <button id="convertButton" class="button" onclick="process()">转换并复制</button>
+    <div id="result"></div>
 
-    <h1>汉字标注转换器</h1> 
-    <textarea id="inputText" placeholder="在这里输入文本"></textarea> 
-    <button id="convertButton" onclick="convertText()">转换</button> 
-    <div id="result"></div> 
-    <button id="copyButton" onclick="copyResult()" style="display:none;">复制 LaTeX 代码</button> 
-    <script> 
-        let convertedText
-        function convertText() { 
-            let input = document.getElementById('inputText').value; 
-            const result = document.getElementById('result'); 
-            const copyButton = document.getElementById('copyButton'); 
-             
-            // 修改正则表达式以支持中文括号 
-            const regex = /([^\(（]+)?([^（\(]+)(?:\(([^\)）]+)\)|（([^）]+)）)?/g; 
-             
-            convertedText = ''; 
-            let match; 
-            input = input.replace(/一 ?[\(（] ?y. ?[\)）]/g,'一(yī)')
-            while ((match = regex.exec(input)) !== null) { 
-                const [fullMatch, prefix = '', hanzi, engPinyin, cnPinyin] = match; 
-                const pinyin = engPinyin || cnPinyin; 
-                 
-                if (pinyin) { 
-                    // 如果有括号内的拼音，使用 MathJax 上标 
-                    const parts = pinyin.match(/.{1,1}/g); 
-                    const uppercasePinyin = parts.map(p => `\\mathrm{${p}}`).join(''); 
-                    convertedText += `${prefix}\\overset{${uppercasePinyin}}{\\mathrm{${hanzi}}}`; 
-                } else if (hanzi) { 
-                    // 没有括号的汉字直接添加 
-                    convertedText += `${prefix || ''}${hanzi}`; 
-                } 
-            } 
-             
-            // 显示 LaTeX 代码 
-            result.textContent = `\\(${convertedText}\\)`; 
-            copyButton.style.display = 'block'; 
- 
-            // 渲染 MathJax 
-            MathJax.Hub.Queue(["Typeset", MathJax.Hub]); 
+    <script>
+        let convertedText;
 
+        // 生成拼音的函数
+        function generatePinyin(text) {
+            const chars = [...text];
+            return chars.map(char => {
+                if (/[\u4e00-\u9fa5]/.test(char)) {
+                    const pinyinStr = pinyinPro.pinyin(char, {
+                        toneType: 'symbol',
+                        pattern: 'pinyin',
+                        multiple: false
+                    });
+                    return `${char}(${pinyinStr})`;
+                }
+                return char;
+            }).join('');
+        }
 
+        // 转换为LaTeX的函数
+        function convertToLatex(pinyinText) {
+            const regex = /([^\(（]+)?([^（\(]+)(?:\(([^\)）]+)\)|（([^）]+)）)?/g;
+            let latexText = '';
+            let match;
             
-        } 
- 
-        function copyResult() { 
-            const result = document.getElementById('result'); 
-            const tempTextArea = document.createElement('textarea'); 
-             
-            // 直接使用 result.textContent 进行复制 
-            //tempTextArea.value = result.textContent.trim(); 
-            tempTextArea.value = convertedText
-            document.body.appendChild(tempTextArea); 
-            tempTextArea.select(); 
-            document.execCommand('copy'); 
-            document.body.removeChild(tempTextArea); 
+            let processedText = pinyinText.replace(/一 ?[\(（] ?y. ?[\)）]/g, '一(yī)');
+            
+            while ((match = regex.exec(processedText)) !== null) {
+                const [fullMatch, prefix = '', hanzi, engPinyin, cnPinyin] = match;
+                const pinyin = engPinyin || cnPinyin;
+                
+                if (pinyin) {
+                    const parts = pinyin.match(/.{1,1}/g);
+                    const uppercasePinyin = parts.map(p => `\\mathrm{${p}}`).join('');
+                    latexText += `${prefix}\\overset{\\;${uppercasePinyin}\\;}{\\mathrm{${hanzi}}}`;
+                } else if (hanzi) {
+                    latexText += `${prefix || ''}${hanzi}`;
+                }
+            }
+            return latexText;
+        }
 
-            function showNotification(message) {
-                const div = document.createElement('div');
-                div.textContent = message;
-                div.style.cssText = `
+        // 主处理函数
+        async function process() {
+            const intermediaResult = document.getElementById('intermediaResult');
+            const inputText = document.getElementById('inputText').value;
+            
+            // 如果中间结果为空，且输入框有内容，则生成拼音
+            if (!intermediaResult.value.trim() && inputText.trim()) {
+                intermediaResult.value = generatePinyin(inputText);
+            }
+            
+            // 使用中间结果框的内容进行后续转换
+            convertedText = convertToLatex(intermediaResult.value);
+            
+            // 显示预览
+            document.getElementById('result').textContent = `\\(${convertedText}\\)`;
+            MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
+
+            // 复制结果
+            try {
+                const clipboardText = '<tex>' + convertedText + '</tex>';
+                const blob = new Blob([clipboardText], { type: 'text/html' });
+                const data = [new ClipboardItem({'text/html': blob})];
+                await navigator.clipboard.write(data);
+                showNotification('已复制到剪贴板');
+            } catch (err) {
+                console.error('复制失败:', err);
+                alert('复制失败，请检查权限设置！');
+            }
+        }
+
+        function showNotification(message) {
+            const div = document.createElement('div');
+            div.textContent = message;
+            div.style.cssText = `
                 position: fixed;
                 top: 20px;
                 right: 20px;
@@ -124,13 +142,18 @@
                 color: white;
                 padding: 10px;
                 border-radius: 5px;
-              `;
-                document.body.appendChild(div);
-                setTimeout(() => div.remove(), 3000);
+                z-index: 1000;
+            `;
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 3000);
+        }
+
+        // 添加快捷键支持
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                process();
             }
-            showNotification('LaTeX 代码已复制到剪贴板');
-        } 
-    </script> 
- 
-</body> 
+        });
+    </script>
+</body>
 </html>
