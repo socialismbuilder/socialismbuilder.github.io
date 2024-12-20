@@ -93,7 +93,7 @@
             let latexText = '';
             let match;
             
-            let processedText = pinyinText.replace(/一 ?[\(（] ?y. ?[\)）]/g, '一(yī)');
+            let processedText = pinyinText.replace(/一 ?[\(（] ?y. ?[\)）]/g, '一(yi)');
             
             while ((match = regex.exec(processedText)) !== null) {
                 const [fullMatch, prefix = '', hanzi, engPinyin, cnPinyin] = match;
