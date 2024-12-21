@@ -82,8 +82,9 @@
             //处理特定格式
             text = formatting(text);
             //分科处理
-            text = classified_process(text, selectedOption)
+            text = classified_process(text, selectedOption);
             //后处理
+            text = html_text(text);
             text = post_process(text);
             return text;
         };

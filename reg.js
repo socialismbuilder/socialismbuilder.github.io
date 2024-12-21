@@ -104,3 +104,9 @@ function tex_process(text) {
     .replace(/β/g,'\\beta')
     return text;
 }
+
+function html_text(text) {
+    text = text
+    .replace(/ ?_{1,2} ?([0-9]{1,3}) ?_{1,2} ?/g, ' <uline style="border-bottom: 1px solid #000;">　$1　</uline> ' )
+    return text;
+}
