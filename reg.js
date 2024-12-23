@@ -25,6 +25,7 @@ function amend_Punctuation(text) {
     .replace(/ *([.,:?]) */g,'$1 ')//英文标点加空格
     .replace(/(?<=[0-9]) *\. *(?=[0-9])/g,'.')//小数点去空格
     .replace(/ *([\(（]) *([\S]{1,10}) *([\)）]) */g,' ($2) ')//括号修正
+    .replace(/…/g,'⋯')
     return text;
 }
 
