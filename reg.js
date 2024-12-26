@@ -3,7 +3,7 @@ function preprocess(text) {
     .replace(/\n+/g,'\n')//处理连续多个回车
     .replace(/(?<![\?\？\.\。!\！]) *\r?\n+ *(?![\(（]?[A-F0-9])/g,' ')//删除多余回车
     .replace(/(?<=[0-9]\.) *\n/g,'')
-    .replace(/(?<!_) *[_\—] *(?!_)/g, ' ____ ')//下划线纠正
+    .replace(/(?<!_) *[_] *(?!_)/g, ' ____ ')//下划线纠正
     .replace(/ ?____ ?/g, ' ____ ')//下划线纠正
     .replace(/ +/g,' ')//多个空格归一化
     return text;
@@ -106,6 +106,7 @@ function tex_process(text) {
     .replace(/\\leq/g,'\\leqslant')
     .replace(/\\geq/g,'\\geqslant')
     .replace(/，/g,',')
+    .replace(/\\cong/g,'≌')
     return text;
 }
 
