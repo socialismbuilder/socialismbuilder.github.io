@@ -35,13 +35,13 @@ function formatting(text) {
     //.replace(/([\u4e00-\u9fa5]) *([\dA-Z]+) */g,'$1$2')//有 1 个
     .replace(/(?<=[\u4e00-\u9fa5，。？]) *([\dA-Z]+) */g,'$1')
     .replace(/(?<=\r?\n)([A-F]) ?(?=[\u4e00-\u9fa5])/gm,'$1. ')
-    .replace(/([\n \)）])( *)([A-F0-9])( ?)[\.\．\。] */g,'$1$3. ')//A.或者1.
+    .replace(/([\n \)）])( *)[\(（]?([A-F0-9])( ?)[\.\．\。）\、)] */g,'$1$3. ')//A.或者1.
     .replace(/\([ 　]*\)[ 　]*/g,' (　) ')//(　)
     .replace(/(?<=[米次克吨斤秒分小平方度瓦千分厘毫微人])[、](?=[米秒毫克吨斤度瓦百千人])/g,'/')//米、秒
     .replace(/(?<=^ ?\(　\) )([0-9])*\. */g,'')
     .replace(/^[\u0028\uFF08]\d+[\u0029\uFF09]/g, '')
-    .replace(/^[\d一二三四五六七八九十]+[\.\．、] */g, '')//删题号
-    .replace(/[\(（] ?[0-9]{1,2} ?分 ?[\)）]/g,'')
+    .replace(/^[\d一二三四五六七八九十Ⅰ]+[\.\．、] */g, '')//删题号
+    .replace(/[\(（] ?[共0-9一二三四五六七八九十.]{1,4} ?分 ?[\)）]/g,'')
     .replace(/ *([ap])\. *m. */g,' $1.m. ')
     .replace(/ *([0-2])?([0-9])\s?[:：]\s?([0-6])?([0-9]) */g,' $1$2:$3$4 ')
     return text;
@@ -95,6 +95,7 @@ function post_process(text) {
     .replace(/ ([b-z]) (?=____)/g,' $1')
     .replace(/(?<=^\(　\) )([0-9])*\. */g,'')
     .replace(/ ?\/ ?/g,'/')
+    .replace(/—\ /g,'—')
     return text;
 }
 
@@ -103,8 +104,10 @@ function tex_process(text) {
     .replace(/[\(（][\)）]/g,'(　)')
     .replace(/α/g,'\\alpha')
     .replace(/β/g,'\\beta')
-    .replace(/\\leq/g,'\\leqslant')
-    .replace(/\\geq/g,'\\geqslant')
+    .replace(/\\leq/g,'\\leqslant ')
+    .replace(/≤/g,'\\leqslant ')
+    .replace(/\\geq/g,'\\geqslant ')
+    .replace(/≥/g,'\\geqslant ')
     .replace(/，/g,',')
     .replace(/\\cong/g,'≌')
     return text;
