@@ -35,7 +35,7 @@ function formatting(text) {
     //.replace(/([\u4e00-\u9fa5]) *([\dA-Z]+) */g,'$1$2')//有 1 个
     .replace(/(?<=[\u4e00-\u9fa5，。？]) *([\dA-Z]+) */g,'$1')
     .replace(/(?<=\r?\n)([A-F]) ?(?=[\u4e00-\u9fa5])/gm,'$1. ')
-    .replace(/([\n \)）])( *)[\(（]?([A-F0-9])( ?)[\.\．\。）\、)] */g,'$1$3. ')//A.或者1.
+    .replace(/([\n \)）])( *)(?<![\(（)])([A-F0-9])( ?)[\.\．\。）\、)] */g,'$1$3. ')//A.或者1.
     .replace(/\([ 　]*\)[ 　]*/g,' (　) ')//(　)
     .replace(/(?<=[米次克吨斤秒分小平方度瓦千分厘毫微人])[、](?=[米秒毫克吨斤度瓦百千人])/g,'/')//米、秒
     .replace(/(?<=^ ?\(　\) )([0-9])*\. */g,'')
@@ -52,6 +52,7 @@ function classified_process(text,selectedOption){
             break;
         case '语数':
             text = text
+            .replace(/右图/g,'下图')
             .replace(/\!/g, '！')
             .replace(/\?/g, '？')
             .replace(/\,/g, '，')
