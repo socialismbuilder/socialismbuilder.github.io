@@ -24,7 +24,7 @@ function amend_Punctuation(text) {
     .replace(/[-]{2,}/g,' —')
     .replace(/ *([.,:?]) */g,'$1 ')//英文标点加空格
     .replace(/(?<=[0-9]) *\. *(?=[0-9])/g,'.')//小数点去空格
-    .replace(/ *([\(（]) *([\S]{1,10}) *([\)）]) */g,' ($2) ')//括号修正
+    .replace(/ *([\(（]) *([\S\n\ ]{1,10}) *([\)）]) */g,' ($2) ')//括号修正
     .replace(/…/g,'⋯')
     return text;
 }
@@ -79,6 +79,7 @@ function classified_process(text,selectedOption){
             .replace(/）/g, ')')
             .replace(/[“”]/g, '"')
             .replace(/[’‘]/g, '\'')
+            .replace(/(?<=[a-z])([,.]) ?/g,'$1 ')
             break;
         default:
             //setOutputText('请先选择处理方式');
