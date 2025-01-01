@@ -26,7 +26,7 @@ function amend_Punctuation(text) {
     .replace(/(?<=[0-9]) *\. *(?=[0-9])/g,'.')//小数点去空格
     .replace(/ *([\(（]) *([\S\n\ ]{1,10}) *([\)）]) */g,' ($2) ')//括号修正
     .replace(/…/g,'⋯')
-    .replace(/·/g,'・')
+    .replace(/·/g,'•')
     return text;
 }
 
