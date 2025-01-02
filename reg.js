@@ -67,7 +67,7 @@ function classified_process(text,selectedOption){
             .replace(/(?<=[\u4e00-\u9fa5]) *([a-zA-z0-9])/g,'$1')
             .replace(/ ?____ ?/g,'____')
             .replace(/ ?([（）]) ?/g,'$1')
-            .replace(/([a-zāáǎàēéěèīíǐìōóǒòūúǔùüǖǘǚǜńň])\ （/g,'$1（')
+            .replace(/([=a-zāáǎàēéěèīíǐìōóǒòūúǔùüǖǘǚǜńň])\ （/g,'$1（')
             break;
         case '英语':
             text = text
