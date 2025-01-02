@@ -56,6 +56,10 @@
             justify-content: center;
             width: 100%;
         }
+        .checkbox-label {
+            display: flex;
+            align-items: center; /* 确保复选框和标签在同一水平线上 */
+        }
     </style>
 </head>
 <body>
@@ -65,6 +69,10 @@
     <div class="button-container">
         <button class="button" onclick="processFromInput()">从输入开始转换</button>
         <button class="button" onclick="processFromIntermediate()">从标注转换</button>
+        <label class="checkbox-label">
+            <input type="checkbox" id="bold" checked>
+            <label for="bold">加粗</label>
+        </label>
     </div>
     <div id="result"></div>
 
@@ -95,7 +103,10 @@
             
             let processedText = pinyinText.replace(/一 ?[\(（] ?y. ?[\)）]/g, '一(yi)')
                                         .replace(/\_/g,'\\_');
-            
+
+            let checkbox = document.getElementById('bold');
+            let isChecked = checkbox.checked;
+
             while ((match = regex.exec(processedText)) !== null) {
                 const [fullMatch, prefix = '', hanzi, engPinyin, cnPinyin] = match;
                 const pinyin = engPinyin || cnPinyin;
@@ -103,7 +114,14 @@
                 if (pinyin) {
                     const parts = pinyin.match(/.{1,1}/g);
                     const uppercasePinyin = parts.map(p => `\\mathrm{${p}}`).join('');
-                    latexText += `${prefix}\\overset{\\;${uppercasePinyin}\\;}{\\mathrm{${hanzi}}}`;
+                    if(isChecked){
+                        latexText += `${prefix}\\overset{\\;${uppercasePinyin}\\;}{\\mathbf{${hanzi}}}`;
+                    }
+                    else{
+                        latexText += `${prefix}\\overset{\\;${uppercasePinyin}\\;}{\\mathrm{${hanzi}}}`;
+                    }
+
+                    
                 } else if (hanzi) {
                     latexText += `${prefix || ''}${hanzi}`;
                 }
