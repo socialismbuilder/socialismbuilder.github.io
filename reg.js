@@ -114,6 +114,7 @@ function tex_process(text) {
     .replace(/≥/g,'\\geqslant ')
     .replace(/，/g,',')
     .replace(/\\cong/g,'≌')
+    .replace(/ ?\.\.\. ?/g,'\\cdots')
     return text;
 }
 
