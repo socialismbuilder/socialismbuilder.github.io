@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Editor</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        #preview {
+            width: 90%;
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <h1>插件使用教程</h1>
+    <div id="preview"></div>
+
+    <script>
+        // Markdown content directly written here
+        const markdownContent = `
+# 点击此处下载:[下载地址](http://ocr.427427.xyz/OCR.zip)
+
+# 安装方法：
+
+## 1. 解压下载的压缩包，并记住存放位置
+![文件内部结构](文件结构.png)
+
+文件夹名称（OCR）可以更改，但内部文件不可更改。
+
+## 2. 安装拓展
+在浏览器插件管理界面，开启开发者模式，点击安装拓展。
+
+![安装拓展](安装拓展.png)
+
+# 接入模型
+
+## 接入大模型 key 说明
+
+大模型需要付费使用，因此需要填写自己的 key。这里使用 deepseek模型。
+
+- 1 分钱可对话 5000 token，每道题消耗大约500词，1 分钱可处理大概十道题。
+- 注册赠送 10 元额度，可处理约 一万道题，一个月内足够使用。此外，还可以申请新账户获取更多额度。
+
+如果不进行此步骤，模型功能将无法使用。
+
+## 获取 key
+
+前往 [deepseek 官网](https://www.deepseek.com) 注册账号并创建 key。
+
+**注意：** 只有在创建 key 时才能看到 key，之后将无法查看。如果丢失，需要删除后重新创建。
+
+![获取 key](获取key.png)
+
+## 接入 key
+
+点击插件，输入刚刚获取的 key。
+
+![接入 key](key1.png) ![接入 key](key2.png)
+
+# 使用方法
+
+## 插件介绍
+
+- 当匹配到网址时，插件会自动启动，包括百度（用于测试）。
+- 匹配到网址后，左下角会出现一个钥匙图标，点击后会出现一个框，框内有一个按钮。
+
+![悬浮按钮](悬浮按钮.png)
+
+## 使用过程
+
+1. 按 \`Ctrl+C\` 复制需要处理的文本。
+2. 插件会弹出对话框，表示已经将剪贴板内容用正则处理好（相当于之前的网页处理）。
+
+   ![对话框](对话框.png)
+3. 按 \`Ctrl+V\` 粘贴处理好的文本。
+4. 如果只想复制而不处理，可以关闭插件，或使用右键复制，或按 \`Ctrl+X\` 剪切。
+5. 点击左下角悬浮框内的按钮，将第二步处理好的文本发送给模型。
+6. 如果 key 正确且网络正常，几秒钟后会显示模型处理结果，结果会自动复制到剪贴板，可以直接粘贴。
+
+![处理例子](处理例子.png)
+
+# 其他配置
+
+## 临时更改要求
+
+- 直接在编辑器第一行题目前输入特殊处理指令，例如：
+
+  ![特殊处理](特殊处理.png)
+
+## 永久更改要求
+
+- 插件文件夹中有五个文件，打开文件夹（之前记住的位置），用记事本或代码编辑器打开 \`content-script.js\` 文件。
+- 向下翻到只有汉字的部分，可以在此处编辑，告诉模型如何处理。
+
+  ![提示词](提示词.png)
+
+# 其他说明
+
+插件不支持在线更新，每次更新都需要重新下载。如果有重大更新，我会在群里通知，按需下载即可。如果有自定义的提示词，请自行保存好。
+        `;
+
+
+        const preview = document.getElementById('preview');
+        preview.innerHTML = marked.parse(markdownContent);
+    </script>
+</body>
+</html>
