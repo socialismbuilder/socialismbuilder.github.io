@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>AI 聊天</title>
+  <!-- 引入 marked.js 用于 markdown 格式渲染 -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background-color: #f7f7f7; height: 100vh; }
+    #container { display: flex; height: 100vh; }
+    #sidebar {
+      width: 250px;
+      background-color: #fff;
+      border-right: 1px solid #ccc;
+      padding: 10px;
+      overflow-y: auto;
+    }
+    #sidebar h2 { margin-bottom: 10px; font-size: 18px; }
+    #sidebar button { width: 100%; margin-bottom: 10px; }
+    #conversationList { list-style: none; }
+    #conversationList li {
+      padding: 5px;
+      margin-bottom: 5px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    #conversationList li:hover {
+      background-color: #e0e0e0;
+    }
+    #chatArea {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    #chatHeader {
+      background-color: #fff;
+      padding: 10px;
+      border-bottom: 1px solid #ccc;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    #chatWindow {
+      flex: 1;
+      padding: 10px;
+      overflow-y: auto;
+      background-color: #fafafa;
+    }
+    .message {
+      padding: 8px;
+      margin-bottom: 8px;
+      border-radius: 4px;
+      max-width: 80%;
+      word-wrap: break-word;
+    }
+    .user { background-color: #d1e7dd; align-self: flex-end; }
+    .ai   { background-color: #e2e3e5; align-self: flex-start; }
+    #chatInput {
+      width: 100%;
+      padding: 10px;
+      resize: none;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+    #sendBtn {
+      padding: 8px 16px;
+      margin: 10px 0;
+    }
+    /* 思考部分（例如 DeepSeek-R1 的推理过程） */
+    #streamingReasoning {
+      padding: 8px;
+      margin: 10px;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    #reasoningToggle {
+      cursor: pointer;
+      color: #007bff;
+      user-select: none;
+      margin-bottom: 5px;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <!-- 左侧会话列表 -->
+    <div id="sidebar">
+      <h2>对话列表</h2>
+      <button id="newConversationBtn">新建对话</button>
+      <ul id="conversationList"></ul>
+    </div>
+    <!-- 右侧聊天区域 -->
+    <div id="chatArea">
+      <div id="chatHeader">
+        <select id="aiSelect"></select>
+        <button id="deleteConversationBtn">删除当前对话</button>
+      </div>
+      <div id="chatWindow"></div>
+      <!-- 推理“思考”部分，支持折叠 -->
+      <div id="streamingReasoning" style="display:none;">
+        <span id="reasoningToggle">[显示/隐藏思考]</span>
+        <div id="reasoningContent" style="display:none; margin-top: 5px;"></div>
+      </div>
+      <textarea id="chatInput" rows="3" placeholder="请输入消息..."></textarea>
+      <button id="sendBtn">发送</button>
+    </div>
+  </div>
+
+  <!-- 引入配置文件 -->
+  <script src="config.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // 配置的 AI 选择（从 config.js 中获取 window.AI_CONFIG 数组）
+      const aiSelect = document.getElementById('aiSelect');
+      window.AI_CONFIG.forEach((config, index) => {
+        const opt = document.createElement('option');
+        opt.value = index;
+        opt.textContent = config.displayName;
+        aiSelect.appendChild(opt);
+      });
+
+      // 本地存储 key
+      const STORAGE_KEY = 'ai_chat_conversations';
+      let conversations = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      let currentConversationIndex = 0;
+
+      // 保存并刷新会话列表
+      function saveConversations() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations));
+        renderConversationList();
+      }
+
+      // 渲染左侧会话列表
+      function renderConversationList() {
+        const list = document.getElementById('conversationList');
+        list.innerHTML = '';
+        conversations.forEach((conv, index) => {
+          const li = document.createElement('li');
+          li.textContent = conv.title || "会话 " + (index + 1);
+          li.style.backgroundColor = (index === currentConversationIndex) ? "#ddeeff" : "transparent";
+          li.onclick = function() {
+            currentConversationIndex = index;
+            renderChatWindow();
+            renderConversationList();
+          };
+          list.appendChild(li);
+        });
+      }
+
+      // 渲染当前会话的聊天内容
+      function renderChatWindow() {
+        const chatWindow = document.getElementById('chatWindow');
+        chatWindow.innerHTML = '';
+        const conv = conversations[currentConversationIndex];
+        if (conv && conv.messages) {
+          conv.messages.forEach(msg => {
+            const div = document.createElement('div');
+            div.className = 'message ' + (msg.role === 'user' ? 'user' : 'ai');
+            // 使用 marked.js 渲染 markdown 内容
+            div.innerHTML = marked.parse(msg.content);
+            chatWindow.appendChild(div);
+          });
+        }
+        // 若当前模型支持推理思考（例如 DeepSeek-R1），尝试显示推理内容
+        const reasoningContainer = document.getElementById('streamingReasoning');
+        if (conv && conv.latestAI && conv.latestAI.reasoning) {
+          reasoningContainer.style.display = 'block';
+          document.getElementById('reasoningContent').innerHTML = marked.parse(conv.latestAI.reasoning);
+        } else {
+          reasoningContainer.style.display = 'none';
+        }
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+      }
+
+      // 新建对话
+      document.getElementById('newConversationBtn').addEventListener('click', () => {
+        conversations.push({ title: "新对话", messages: [] });
+        currentConversationIndex = conversations.length - 1;
+        saveConversations();
+        renderChatWindow();
+      });
+
+      // 删除当前对话
+      document.getElementById('deleteConversationBtn').addEventListener('click', () => {
+        if (confirm("确认删除当前对话？")) {
+          conversations.splice(currentConversationIndex, 1);
+          currentConversationIndex = Math.max(0, currentConversationIndex - 1);
+          saveConversations();
+          renderChatWindow();
+        }
+      });
+
+      // 思考部分切换折叠
+      const reasoningToggle = document.getElementById('reasoningToggle');
+      const reasoningContent = document.getElementById('reasoningContent');
+      reasoningToggle.addEventListener('click', () => {
+        reasoningContent.style.display = (reasoningContent.style.display === 'none' ? 'block' : 'none');
+      });
+
+      // 处理消息发送和流式反馈
+      document.getElementById('sendBtn').addEventListener('click', sendMessage);
+      document.getElementById('chatInput').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+
+      async function sendMessage() {
+        const input = document.getElementById('chatInput');
+        const text = input.value.trim();
+        if (!text) return;
+        input.value = '';
+
+        // 获取当前对话
+        const conv = conversations[currentConversationIndex];
+        // 添加用户发送的消息
+        conv.messages.push({ role: 'user', content: text });
+        renderChatWindow();
+        saveConversations();
+
+        // 添加一个 AI 回复占位符，同时保存推理部分（如API返回了推理内容）
+        const aiMessage = { role: 'ai', content: '', reasoning: '' };
+        conv.messages.push(aiMessage);
+        conv.latestAI = aiMessage; // 用于后续显示推理部分的内容
+        renderChatWindow();
+        saveConversations();
+
+        // 根据选择的 AI 配置构造请求
+        const selectedIndex = aiSelect.value;
+        const config = window.AI_CONFIG[selectedIndex];
+        // 拼接 API 地址：host + endpoint
+        const apiUrl = config.host + config.endpoint;
+        const payload = {
+          model: config.model,           // 发送时的模型名称
+          messages: conv.messages,       // 包含完整长对话
+          stream: true                   // 流式返回
+        };
+
+        try {
+          const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + config.apiKey  // 使用配置文件中的 API key
+            },
+            body: JSON.stringify(payload)
+          });
+          if (!response.ok) {
+            aiMessage.content = "错误: " + response.statusText;
+            renderChatWindow();
+            return;
+          }
+          // 使用流式读取
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder('utf-8');
+          let done = false;
+          while (!done) {
+            const { done: doneReading, value } = await reader.read();
+            done = doneReading;
+            const chunk = decoder.decode(value || new Uint8Array());
+            // 假设每个 chunk 为 API 返回的一部分 token，直接追加到回复内容中
+            aiMessage.content += chunk;
+            renderChatWindow();
+          }
+          // 如果返回数据中包含推理思考部分（示例中假设以特殊标识分割，可自行根据实际 API 格式解析）
+          // 例如：返回格式 "...[REASONING_START]推理部分内容[REASONING_END]..."
+          const reasoningMatch = aiMessage.content.match(/\[REASONING_START\]([\s\S]*?)\[REASONING_END\]/);
+          if (reasoningMatch) {
+            aiMessage.reasoning = reasoningMatch[1];
+            // 去除思考部分文本后，仅显示主回复内容
+            aiMessage.content = aiMessage.content.replace(reasoningMatch[0], '');
+          }
+          saveConversations();
+          renderChatWindow();
+        } catch (err) {
+          aiMessage.content = "错误: " + err.toString();
+          renderChatWindow();
+        }
+      }
+
+      // 初始加载：如果没有对话，则自动创建一个
+      if (conversations.length === 0) {
+        conversations.push({ title: "新对话", messages: [] });
+        currentConversationIndex = 0;
+        saveConversations();
+      } else {
+        renderConversationList();
+        renderChatWindow();
+      }
+    });
+  </script>
+</body>
+</html>
